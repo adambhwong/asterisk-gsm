@@ -24,7 +24,7 @@ A containerized Asterisk setup powered by `python:3.15-alpine` and `asterisk-cha
 │   ├── detect_dongles.py   # Maps /sys/bus/usb devices to dongle slots
 │   └── setup_profiles.py   # Interrogates modems for IMEI/IMSI & updates dongle.conf
 └── README.md
-
+```
 
 ## Reference
 https://www.linkedin.com/pulse/self-hosting-gsm-sip-bridge-service-adam-wong-iz2ee/
