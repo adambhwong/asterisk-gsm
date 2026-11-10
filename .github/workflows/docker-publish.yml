@@ -118,7 +118,7 @@ jobs:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
           tags: |
             type=ref,event=branch
-            type=semver,pattern={{version}},value=${{ github.event_name == 'push' && github.ref == 'refs/heads/main' && needs.auto-tag.outputs.new_tag || '' }}
+            type=semver,pattern={{version}},value=${{ github.event_name == 'push' && github.ref == 'refs/heads/main' && format('v{0}',needs.auto-tag.outputs.new_tag) || '' }}
             type=sha,prefix=sha-,enable=true,priority=100,format=short
             type=raw,value=latest,enable=${{ github.ref == 'refs/heads/main' }}
 
