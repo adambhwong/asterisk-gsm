@@ -45,6 +45,7 @@ jobs:
     permissions:
       contents: read
       packages: write
+      security-events: write  # Allows uploading SARIF reports to GitHub Security tab
 
     steps:
       - name: Checkout repository
@@ -72,7 +73,27 @@ jobs:
             type=semver,pattern={{major}}.{{minor}}
             type=sha,prefix=sha-,enable=true,priority=100,format=short
 
-      - name: Build and push Docker image
+      # Step 1: Build the image locally into Docker engine so Trivy can scan it
+      - name: Build local image for security scanning
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          load: true
+          tags: local-scan-target:${{ github.sha }}
+
+      # Step 2: Scan the built image for vulnerabilities using Trivy
+      - name: Run Trivy vulnerability scanner
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: local-scan-target:${{ github.sha }}
+          format: 'table'
+          exit-code: '1'             # Fails the pipeline step if vulnerabilities are found
+          ignore-unfixed: true      # Excludes vulnerabilities that have no official patch yet
+          vuln-type: 'os,library'
+          severity: 'CRITICAL,HIGH'
+
+      # Step 3: Push to registry only after passing the scan
+      - name: Build and push Docker image to GHCR
         uses: docker/build-push-action@v5
         with:
           context: .
