@@ -35,7 +35,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           DEFAULT_BUMP: patch
-          WITH_V_PREFIX: true
+          WITH_V: true
           RELEASE_BRANCHES: main
 
   # 2. Security Scans (Secret Leak & Static Analysis)
@@ -99,6 +99,7 @@ jobs:
             type=semver,pattern={{version}}
             type=semver,pattern={{major}}.{{minor}}
             type=sha,prefix=sha-,enable=true,priority=100,format=short
+            type=raw,value=latest,enable=${{ github.ref == 'refs/heads/main' }}
 
       - name: Build local image for security scanning
         uses: docker/build-push-action@v7
