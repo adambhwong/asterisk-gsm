@@ -96,10 +96,8 @@ jobs:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
           tags: |
             type=ref,event=branch
-            ${{- if and (eq(github.event_name, 'push') (eq(github.ref, 'refs/heads/main'))) -}}
-            type=semver,pattern={{version}},value=${{ needs.auto-tag.outputs.new_tag }}
-            type=semver,pattern={{major}}.{{minor}},value=${{ needs.auto-tag.outputs.new_tag }}
-            ${{ endif -}}
+            type=semver,pattern={{version}},value=${{ github.event_name == 'push' && github.ref == 'refs/heads/main' && needs.auto-tag.outputs.new_tag || '' }}
+            type=semver,pattern={{major}}.{{minor}},value=${{ github.event_name == 'push' && github.ref == 'refs/heads/main' && needs.auto-tag.outputs.new_tag || '' }}
             type=sha,prefix=sha-,enable=true,priority=100,format=short
             type=raw,value=latest,enable=${{ github.ref == 'refs/heads/main' }}
 
