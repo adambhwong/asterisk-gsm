@@ -38,7 +38,29 @@ jobs:
           WITH_V: true
           RELEASE_BRANCHES: main
 
-  # 2. Security Scans (Secret Leak & Static Analysis)
+  # 2. Automatically create a GitHub Release when a new tag is pushed
+  create-release:
+    needs: [auto-tag]
+    if: ${{ needs.auto-tag.outputs.new_tag != '' }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5
+        with:
+          fetch-depth: '0'
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ needs.auto-tag.outputs.new_tag }}
+          name: Release ${{ needs.auto-tag.outputs.new_tag }}
+          generate_notes: true
+          draft: false
+          prerelease: false
+
+  # 3. Security Scans (Secret Leak & Static Analysis)
   security-scan:
     runs-on: ubuntu-latest
     steps:
@@ -64,7 +86,7 @@ jobs:
           pip install --no-cache-dir bandit
           bandit -r scripts/ -ll --format custom || true
 
-  # 3. Build, Trivy Scan, and Push
+  # 4. Build, Trivy Scan, and Push
   build-and-push:
     needs: [auto-tag, security-scan]
     if: always()
@@ -97,7 +119,6 @@ jobs:
           tags: |
             type=ref,event=branch
             type=semver,pattern={{version}},value=${{ github.event_name == 'push' && github.ref == 'refs/heads/main' && needs.auto-tag.outputs.new_tag || '' }}
-            type=semver,pattern={{major}}.{{minor}},value=${{ github.event_name == 'push' && github.ref == 'refs/heads/main' && needs.auto-tag.outputs.new_tag || '' }}
             type=sha,prefix=sha-,enable=true,priority=100,format=short
             type=raw,value=latest,enable=${{ github.ref == 'refs/heads/main' }}
 
