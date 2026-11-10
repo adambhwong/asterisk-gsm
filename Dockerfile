@@ -7,6 +7,12 @@ RUN apk add --no-cache \
     asterisk-chan-dongle \
     libusb
 
+# Upgrade vulnerable Python packages to fix CVEs (msgpack, setuptools, urllib3)
+RUN pip install --no-cache-dir --upgrade \
+    "msgpack>=1.2.3" \
+    "setuptools>=78.1.1" \
+    "urllib3>=2.8.0"
+
 # Copy the entrypoint script into the container
 COPY entrypoint.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh
