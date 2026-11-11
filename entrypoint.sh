@@ -11,6 +11,9 @@ _term() {
 
 trap _term TERM INT
 
+# init asterisk dongle config
+python /app/scripts/dongle.conf
+
 # Start asterisk in the foreground
 asterisk -f &
 

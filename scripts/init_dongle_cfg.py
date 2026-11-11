@@ -1,17 +1,33 @@
 from pathlib import Path
+import re
 
 def main():
     dongle_id = 1001
     base_dir = Path("/sys/bus/usb/devices")
+    dongle_conf_sample = "/etc/asterisk/dongle.conf.sample"
+    dongle_conf_file = "/etc/asterisk/dongle.conf"
+    dongles = []
+
     
     if not base_dir.exists():
         print("Error: /sys/bus/usb/devices not found. (Are you running this on Linux?)")
         return
 
-    conf_lines = []
+    # Read the sample configuration file using an absolute path
+    with open(dongle_conf_sample, "r") as f:
+        content = f.read()
+     
+    # Perform the equivalent sed operations:
+    #   - Replace lines starting with 'exten=' with ';exten='
+    #   - Delete everything from the line starting with '.dongle0.' to the end of the file
+    content = re.sub(r"^exten=", ";exten=", content, flags=re.MULTILINE)
+    content = re.sub(r"^.dongle0..*", "", content, flags=re.MULTILINE | re.DOTALL)
+    
+    # Write the processed content directly to dongle.conf using an absolute path
+    with open(dongle_conf_file, "w") as f:
+        f.write(content)
 
-    # Find all 'product' files up to depth 2 (equivalent to find -L ... -maxdepth 2 -name product)
-    product_files = list(base_dir.glob("*/product")) + list(base_dir.glob("*/*/product"))
+    product_files = list(base_dir.glob("*/product"))
 
     for product_file in product_files:
         # Case-insensitive check for "huawei" (equivalent to grep -li huawei)
@@ -32,8 +48,9 @@ def main():
             continue
 
         # Check product IDs and extract ttyUSB paths
+        this_dongle = {}
         if id_product in ("140c", "141b"):
-            conf_lines.append(f"\n[dongle-{dongle_id}]")
+            this_dongle["name"] = f"dongle-{dongle_id}"
             
             # Find ttyUSB* directories under dev_dir/* (equivalent to find -L $dev/* -maxdepth 1 -type d -name "ttyUSB*")
             tty_dirs = []
@@ -52,21 +69,27 @@ def main():
                     
                     if id_product == "140c":
                         if field7.endswith("2"):
-                            conf_lines.append(f"audio=/dev/{field8}")
+                            this_dongle["audio"] = f"/dev/{field8}"
                         elif field7.endswith("3"):
-                            conf_lines.append(f"data=/dev/{field8}")
+                            this_dongle["data"] = f"/dev/{field8}"
                     elif id_product == "141b":
                         if field7.endswith("1"):
-                            conf_lines.append(f"audio=/dev/{field8}")
+                            this_dongle["audio"] = f"/dev/{field8}"
                         elif field7.endswith("0"):
-                            conf_lines.append(f"data=/dev/{field8}")
+                            this_dongle["data"] = f"/dev/{field8}"
 
+            dongles.append(this_dongle)
             dongle_id += 1
 
     # Append results to dongle.conf (equivalent to >> dongle.conf)
-    if conf_lines:
-        output_content = "\n".join(conf_lines).strip() + "\n"
-        with open("dongle.conf", "a", encoding="utf-8") as f:
+    output_content = ""
+    for d in dongles:
+        if "audio" in d and "data" in d:
+            output_content += f"\n[{d['name']}]\n"
+            output_content += f"audio={d['audio']}\n"
+            output_content += f"data={d['data']}\n"
+    if output_content:    
+        with open(dongle_conf_file, "a", encoding="utf-8") as f:
             f.write(output_content)
         print("Successfully updated dongle.conf")
     else:
