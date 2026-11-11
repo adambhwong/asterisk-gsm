@@ -11,6 +11,9 @@ _term() {
 
 trap _term TERM INT
 
+# Start asterisk in the background for IMEI & IMSI 
+asterisk &
+
 # init asterisk dongle config
 python /app/scripts/dongle.conf
 
