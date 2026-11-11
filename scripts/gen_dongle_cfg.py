@@ -42,7 +42,7 @@ def main():
     dongle_profiles = []
 
     # 1. Find dongle names from dongle.conf (equivalent to grep -o dongle-[0-9]* dongle.conf)
-    conf_path = Path("dongle.conf")
+    conf_path = Path("/etc/asterisk/dongle.conf")
     dongles = []
     if conf_path.exists():
         content = conf_path.read_text(encoding="utf-8", errors="ignore")
@@ -89,7 +89,7 @@ def main():
         asterisk_proc.wait()
 
     # 4. Process dongle.conf.sample (equivalent to sed 's#^exten=#;exten=#; /^.dongle0./,$d')
-    sample_path = Path("dongle.conf.sample")
+    sample_path = Path("/etc/asterisk/dongle.conf.sample")
     new_conf_lines = []
     
     if sample_path.exists():
