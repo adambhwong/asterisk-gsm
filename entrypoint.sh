@@ -11,11 +11,17 @@ _term() {
 
 trap _term TERM INT
 
-# Start asterisk in the background for IMEI & IMSI 
-asterisk &
+# init asterisk dongle config with ttyUSB (for Huawei E1752)
+python /app/scripts/init_dongle_cfg.py
 
-# init asterisk dongle config
-python /app/scripts/dongle.conf
+# Start asterisk in the background for IMEI & IMSI 
+#asterisk &
+
+# update asterisk dongle config using IMEI & IMSI
+#python /app/scripts/gen_dongle_cfg.py
+
+# Stop asterisk 
+#asterisk -rx "core stop gracefully"
 
 # Start asterisk in the foreground
 asterisk -f &
